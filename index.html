@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F8DCE6">
+<title>关系位次测试 · 你在上位还是下位</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23F8DCE6'/%3E%3Cpath d='M12 40 L32 20 L52 40' fill='none' stroke='%23C9A063' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --gold:#C9A063; --gold-deep:#B08A4F; --gold-soft:#E8D3A8;
+    --pink:#F8DCE6; --pink-soft:#FCEEF3; --pink-deep:#EBA9C2;
+    --ink:#5C4A52; --ink-soft:#9A8590; --card:#FFFFFF; --line:#F0E2D6;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(115% 78% at 12% 8%, rgba(255,186,120,.38) 0%, rgba(255,186,120,0) 58%),
+      radial-gradient(108% 74% at 92% 22%, rgba(255,158,190,.36) 0%, rgba(255,158,190,0) 60%),
+      radial-gradient(120% 88% at 78% 96%, rgba(255,214,120,.34) 0%, rgba(255,214,120,0) 62%),
+      linear-gradient(155deg, #FFF3E2 0%, #FFE7EE 48%, #FFF6E4 100%);
+    color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh; min-height:100dvh; -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:480px; margin:0 auto; padding:18px 18px 46px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .brand{font-size:13px; letter-spacing:2px; color:var(--gold-deep); font-weight:600;}
+  .topbar small{font-size:11px; color:var(--ink-soft);}
+  .view{flex:1; display:flex; flex-direction:column; justify-content:center;}
+  #result{justify-content:flex-start;}
+  .hidden{display:none !important;}
+  footer{text-align:center; font-size:11px; color:var(--ink-soft); margin-top:26px; line-height:1.6;}
+  .wm{position:fixed; right:14px; bottom:calc(10px + env(safe-area-inset-bottom)); font-size:11px; letter-spacing:1px; color:var(--gold-deep); opacity:.62; pointer-events:none; user-select:none; -webkit-user-select:none; z-index:5;}
+
+  .home-title{font-size:31px; font-weight:800; text-align:center; margin:12px 0 8px; line-height:1.34;}
+  .home-sub{text-align:center; color:var(--ink-soft); font-size:14px; margin-bottom:22px; line-height:1.75;}
+  .intro-card{background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:0 4px 14px rgba(201,160,99,.08);}
+  .intro-card p{font-size:14px; line-height:1.85; margin:0; color:var(--ink);}
+  .intro-card b{color:var(--gold-deep);}
+  .dim-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:0 0 22px;}
+  .dim-chips span{background:var(--pink-soft); border:1px solid var(--line); color:var(--gold-deep); font-size:12px; padding:6px 11px; border-radius:20px;}
+  .start-btn{width:100%; border:none; border-radius:16px; padding:16px; font-size:17px; font-weight:700; color:#fff; background:linear-gradient(135deg,var(--gold),var(--gold-deep)); box-shadow:0 6px 16px rgba(176,138,79,.35); cursor:pointer;}
+  .start-btn:active{transform:scale(.98);}
+  .home-tip{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:15px; line-height:1.8;}
+
+  .quiz-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .quiz-back{font-size:13px; color:var(--gold-deep); cursor:pointer; background:none; border:none; padding:4px 0;}
+  .quiz-prog{font-size:13px; color:var(--ink-soft);}
+  .quiz-dim{font-size:12px; color:var(--gold-deep); font-weight:600; text-align:center; margin-bottom:10px; letter-spacing:1px;}
+  .bar{height:8px; background:var(--pink); border-radius:6px; overflow:hidden; margin:8px 0 26px;}
+  .bar > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--gold-soft),var(--gold)); border-radius:6px; transition:width .3s;}
+  .q-index{font-size:13px; color:var(--gold-deep); font-weight:700; letter-spacing:1px;}
+  .q-text{font-size:20px; font-weight:700; line-height:1.6; margin:8px 0 22px;}
+  .opt{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px; margin-bottom:11px; font-size:14.5px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:.12s; color:var(--ink); box-shadow:0 3px 10px rgba(201,160,99,.06); line-height:1.5;}
+  .opt:active{transform:scale(.985); border-color:var(--gold); background:var(--pink-soft);}
+  .opt.picked{border-color:var(--gold); background:var(--pink-soft);}
+  .opt .dot{flex:0 0 24px; width:24px; height:24px; border-radius:50%; border:1.5px solid var(--gold-soft); color:var(--gold-deep); font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+
+  .r-who{text-align:center; font-size:12px; color:var(--gold-deep); font-weight:600; letter-spacing:1px; margin:12px 0 2px;}
+  .r-num{text-align:center; font-size:74px; font-weight:800; line-height:1.05; color:var(--gold-deep); margin:2px 0 0;}
+  .r-num small{font-size:24px; font-weight:700;}
+  .r-vs{text-align:center; font-size:13px; color:var(--ink-soft); margin:0 0 14px;}
+  .r-vs b{color:var(--gold-deep);}
+  .posbar-wrap{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px 16px 12px; margin-bottom:12px; box-shadow:0 4px 14px rgba(201,160,99,.08);}
+  .posbar{position:relative; height:12px; border-radius:8px; background:linear-gradient(90deg,var(--pink),var(--gold-soft),var(--gold)); margin:22px 4px 12px;}
+  .posbar i{position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--gold-deep); transform:translate(-50%,-50%); transition:left .8s ease; box-shadow:0 2px 8px rgba(176,138,79,.4);}
+  .posbar-lab{display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft);}
+  .r-name{text-align:center; font-size:24px; font-weight:800; margin:16px 0 2px;}
+  .r-tag{text-align:center; font-size:12px; color:#fff; background:var(--gold-deep); display:block; width:fit-content; margin:8px auto 14px; padding:4px 12px; border-radius:20px; letter-spacing:1px;}
+  .card{background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:16px; margin-bottom:12px; box-shadow:0 4px 14px rgba(201,160,99,.08);}
+  .card h3{margin:0 0 10px; font-size:14px; color:var(--gold-deep); letter-spacing:1px;}
+  .core{font-size:14.5px; line-height:1.9; color:var(--ink); margin:0;}
+  .dim-row{margin-bottom:12px;}
+  .dim-row:last-child{margin-bottom:0;}
+  .dim-line{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
+  .dim-line b{color:var(--ink); font-weight:600;}
+  .dim-line span{color:var(--gold-deep); font-weight:700;}
+  .dim-track{height:9px; border-radius:6px; background:var(--pink); overflow:hidden;}
+  .dim-track i{display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,var(--gold-soft),var(--gold)); transition:width .8s ease;}
+  .echo{margin-bottom:14px;}
+  .echo:last-child{margin-bottom:0;}
+  .echo-q{font-size:13px; color:var(--ink-soft); margin-bottom:4px;}
+  .echo-a{font-size:14.5px; font-weight:700; color:var(--ink); line-height:1.6;}
+  .echo-note{font-size:13px; color:var(--gold-deep); line-height:1.6; margin-top:5px;}
+  .secret{background:linear-gradient(135deg,#FFF1F6,#FCEEF3); border:1.5px solid var(--gold-soft);}
+  .secret p{font-size:14.5px; line-height:1.9; margin:0; color:var(--ink);}
+  .tip{font-size:14px; line-height:1.85; color:var(--ink); margin:0;}
+  .quote{text-align:center; font-size:16px; font-weight:700; color:var(--gold-deep); line-height:1.8; margin:6px 0 18px; padding:0 6px;}
+  .btn{display:block; width:100%; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:700; cursor:pointer; margin-top:10px;}
+  .btn-share{background:linear-gradient(135deg,var(--gold),var(--gold-deep)); color:#fff; box-shadow:0 6px 16px rgba(176,138,79,.35);}
+  .btn-again{background:#fff; color:var(--gold-deep); border:1.5px solid var(--gold);}
+  .btn:active{transform:scale(.97);}
+  .r-tip{text-align:center; font-size:12.5px; color:var(--ink-soft); line-height:1.8; margin-top:16px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar"><span class="brand">关系位次测试</span><small>20 题 · 约 2 分钟</small></div>
+
+  <!-- HOME -->
+  <section class="view" id="home">
+    <h1 class="home-title">你在关系里<br>是上位，还是下位？</h1>
+    <p class="home-sub">不是谁更爱谁，是<br>谁在带着节奏、谁在悄悄让步</p>
+    <div class="intro-card">
+      <p>20 个<b>真实相处里的具体瞬间</b>——谁先发消息、谁定见面、吵完谁先开口。<br>不评判好坏，只看你站在哪一端，以及<b>你在哪些事上握着主动、哪些事上其实在让</b>。</p>
+    </div>
+    <div class="dim-chips">
+      <span>联系主动权</span><span>安排决策权</span><span>情绪依赖度</span><span>让步与底线</span><span>谁更怕失去</span>
+    </div>
+    <button class="start-btn" id="startBtn">开始测试</button>
+    <p class="home-tip">答案只在你手机里，不上传、不留痕<br>本测试为娱乐参考，不评判关系好坏</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="view hidden" id="quiz">
+    <div class="quiz-head">
+      <button class="quiz-back" id="backBtn">‹ 上一题</button>
+      <span class="quiz-prog" id="prog">第 1 / 20 题</span>
+    </div>
+    <div class="quiz-dim" id="qDim"></div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="q-index" id="qIndex">QUESTION 01</div>
+    <div class="q-text" id="qText"></div>
+    <div id="optList"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="view hidden" id="result">
+    <div class="r-who">你的关系位次指数</div>
+    <div class="r-num" id="rNum">32<small> / 100</small></div>
+    <div class="r-vs" id="rVs"></div>
+    <div class="posbar-wrap">
+      <div class="posbar"><i id="posPin"></i></div>
+      <div class="posbar-lab"><span>TA 在带节奏</span><span>势均力敌</span><span>你在带节奏</span></div>
+    </div>
+    <div class="r-name" id="rName"></div>
+    <span class="r-tag" id="rTag"></span>
+    <div class="card"><p class="core" id="rCore"></p></div>
+
+    <div class="card">
+      <h3>五个维度，你分别在哪个位置</h3>
+      <div id="dimBars"></div>
+    </div>
+
+    <div class="card">
+      <h3>你的答案里，藏着这些</h3>
+      <div id="echoList"></div>
+    </div>
+
+    <div class="card secret" id="extremeCard">
+      <h3 id="extremeTitle"></h3>
+      <p id="extremeText"></p>
+    </div>
+
+    <div class="card secret">
+      <h3>只有你自己知道的那一面</h3>
+      <p id="rSecret"></p>
+    </div>
+
+    <div class="card">
+      <h3>给你的一句提醒</h3>
+      <p class="tip" id="rTip"></p>
+    </div>
+
+    <p class="quote" id="rQuote"></p>
+    <button class="btn btn-share" id="shareBtn">保存结果图</button>
+    <button class="btn btn-again" id="againBtn">再测一次</button>
+    <p class="r-tip">发给 TA 也测一次，看看两个人的读数差多少<br>很多情侣会发现，双方都觉得自己是「在让的那个」</p>
+  </section>
+
+  <footer>位次不是输赢，是你们相处的方式 · 恋爱自测系列</footer>
+  <div class="wm">小红书@异地恋快快走</div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+
+  /* ---------- 五个维度 ---------- */
+  var DIMS = [
+    {k:'lead', name:'联系主动权',
+      low:'联系这件事上，你比 TA 更怕断。', high:'联系这件事上你不急着接，节奏更多由 TA 来追。',
+      veryLow:'你几乎总是先开口的那一个。久了会有点累，可真让你不找，你又做不到。',
+      veryHigh:'你很少主动找，但 TA 真没来消息的时候，你其实会留意——只是不会说。'},
+    {k:'decide', name:'安排决策权',
+      low:'安排上你习惯先配合，很少把「我想」摆到台面。', high:'安排上你习惯拿主意，而且拿得挺自然。',
+      veryLow:'选择权交出去太久，你偶尔会愣一下：我自己到底想去哪来着。',
+      veryHigh:'大大小小都由你拿主意，久了你其实挺想有人替你决定一次。'},
+    {k:'emotion', name:'情绪依赖度',
+      low:'你的情绪更容易被 TA 的一举一动牵着走。', high:'情绪上你比较自洽，不太需要靠 TA 的回应稳住自己。',
+      veryLow:'TA 一条消息的语气，就能给你一整天定调。好一点坏一点，都跟着走。',
+      veryHigh:'你习惯自己把情绪消化掉，但偶尔也会希望 TA 不用你说就能看出来。'},
+    {k:'yield', name:'让步与底线',
+      low:'到了要争的时候，先松口的常常是你。', high:'该说清楚的时候你不太会退，底线守得很明白。',
+      veryLow:'你很少说「不」，所以 TA 大概还没见过你真正咬住不放是什么样。',
+      veryHigh:'你守得住底线，只是有时候道理赢了，心里也没多好受。'},
+    {k:'hold', name:'谁更怕失去',
+      low:'你比 TA 更常去确认「我们还好吗」。', high:'你很少主动要承诺，心里对这段关系是有底的。',
+      veryLow:'你不敢问「我们还好吗」，可每次 TA 随口提到以后，你都会悄悄记很久。',
+      veryHigh:'你心里对这段关系是有底的，只是 TA 未必知道——你也不太习惯讲。'}
+  ];
+  function dimOf(k){ for(var i=0;i<DIMS.length;i++) if(DIMS[i].k===k) return DIMS[i]; return DIMS[0]; }
+
+  /* ---------- 20 题：每题 4 个专属选项 ----------
+     dir = 1  → A「最下位」 … D「最上位」
+     dir = -1 → A「最上位」 … D「最下位」
+     方向混合，避免答题人看穿选项规律；维度与方向均已打散交错。
+     题目只写具体会发生的瞬间，不做抽象性格自陈。 */
+  var QUIZ = [
+    {q:'早上那句「醒了吗」，通常谁先发', d:'lead', dir:1, o:[
+      '基本都是我先，怕 TA 起床没人理','多数时候是我，已经习惯了','不一定，谁先醒谁发','几乎都是 TA 先，我不太惦记这事']},
+    {q:'下次见面定哪天，一般是怎么定下来的', d:'decide', dir:-1, o:[
+      '我挑好日子跟 TA 说一声','我提两三个时间让 TA 选','TA 提，我基本都配合','一直没定，等 TA 哪天方便']},
+    {q:'TA 一整天没回消息，你脑子里', d:'emotion', dir:1, o:[
+      '会反复翻聊天记录，想是不是哪句没说好','会猜是不是我哪里让他不高兴了','会多瞄两眼手机','该干嘛干嘛，忙起来就忘了']},
+    {q:'意见不合，最后通常怎么收场', d:'yield', dir:-1, o:[
+      '多半是 TA 顺着我','各让一点，谁也别说谁','我先不争了，过去就好','基本都是我先松口']},
+    {q:'想到以后，你更常', d:'hold', dir:1, o:[
+      '会怕 TA 的计划里没有我','会跟 TA 聊，想确认 TA 怎么打算','会想，但不太说出口','没多想，走到哪算哪']},
+    {q:'聊着聊着冷场了，谁会再找个话题', d:'lead', dir:-1, o:[
+      '放着就好，TA 自然会来接','不太在意，过会儿再说','我会过一阵再找点话','我会马上接上，怕就这么断了']},
+    {q:'吃饭的时候，你说「随便」，其实', d:'yield', dir:1, o:[
+      '怕说了想吃的，显得我事多','心里有偏好，但懒得争','真没所谓，吃啥都行','心里早有答案，TA 猜不到我还会急']},
+    {q:'「我们好好的」这类话，谁更常说', d:'hold', dir:-1, o:[
+      'TA 说得多','差不多','我说得多','基本都是我在确认']},
+    {q:'吃什么、去哪儿，最后谁拍板', d:'decide', dir:1, o:[
+      '我都行，TA 定就好','我会说「你选吧」，有不合再讲','多半我提，TA 点头','基本是我定，我挑的地方 TA 也喜欢']},
+    {q:'心情差的那天，你更常', d:'emotion', dir:-1, o:[
+      '自己消化，不太想让 TA 跟着烦','会提一句，但不用 TA 做什么','想让 TA 陪着聊一会儿','得 TA 哄一哄，我才缓得过来']},
+    {q:'吵架那晚，你最怕的是', d:'hold', dir:-1, o:[
+      '怕这件事没说清楚','怕明天还别扭','怕 TA 不回我消息','怕就这么算了，谁也不提了']},
+    {q:'忙起来半天没消息，谁先问一句「在吗」', d:'lead', dir:1, o:[
+      '我，撑不到晚上就会问','多半是我先','看谁先空下来','基本是 TA 来找我']},
+    {q:'计划临时变了，谁改自己的安排', d:'decide', dir:-1, o:[
+      '基本是 TA 迁就我这边','看谁那头更好挪','多半是我改，配合一下','我已经习惯先把自己那头让掉']},
+    {q:'TA 给异性的动态点了赞，你第一反应', d:'emotion', dir:-1, o:[
+      '划过去，没多想','会看一眼是哪个异性','会有点闷，但不说出口','会忍不住绕着问两句']},
+    {q:'TA 忘了你提过两次的小事，你', d:'yield', dir:-1, o:[
+      '会直接再说一次，不绕','会顺口提一嘴','算了，不提了','自己记着，但装作没事']},
+    {q:'TA 说「最近有点累，想缓缓」，你', d:'hold', dir:1, o:[
+      '会先低头，怕一缓就没了','会反复想是不是我哪里没做好','说好，照常过','给空间，自己也歇歇']},
+    {q:'晚上谁先说「我先睡啦」', d:'lead', dir:1, o:[
+      '我一般等 TA 睡了才放下手机','会等 TA 先提，我再收尾','看时间，谁先困谁说','我困了就说，不等谁']},
+    {q:'TA 说这周太忙先不视频了，你', d:'emotion', dir:-1, o:[
+      '正好我也忙，各自歇歇','行，那下周再约','有点失落，还是回了个「好」','嘴上说好，但会一直惦记到下次']},
+    {q:'视频聊多久、什么时候挂，谁说了算', d:'decide', dir:-1, o:[
+      '我说差不多了就挂','看情况，谁有事谁提','多半是 TA 提，我跟着','等 TA 说困了我才敢挂']},
+    {q:'明明是你不高兴，会不会你先开口', d:'yield', dir:1, o:[
+      '会，怕冷着冷着就散了','常会，想赶紧翻篇','看这次是谁的问题','不会，得把话说清楚']}
+  ];
+
+  /* ---------- 五档结果：外层画像 + 只有自己知道的内里，不评判好坏 ---------- */
+  var LEVELS = [
+    {max:32, name:'把 TA 放在很前面', tag:'明显下位',
+      core:'你习惯先看 TA 的脸色，再决定自己那句话要不要说。聊到一半冷了场，第一个找话题的常是你；计划临时改了，先把自己那头让掉的也是你。你不是没有主意，是怕一开口，气氛就变了。',
+      secret:'但你自己清楚，你让的从来不是底气，是在乎——真到了你特别想守的事上，你其实一步没退过。',
+      tip:'可以试着把「随便」换成一次具体的「我想去这家」。让对方知道你的偏好，不等于给 TA 添麻烦。',
+      quote:'你不是没有主意，只是把 TA 的反应排在了自己前面。'},
+    {max:44, name:'嘴上不说，行动上常让', tag:'偏下位',
+      core:'大多数时候你好说话，可心里是有秤的。TA 一整天没回，你会多瞄两眼手机；明明是你不高兴，先开口把气氛捞回来的也常是你。你不爱把在意挂在嘴上，行动里却全漏了出来。',
+      secret:'别人大概觉得你性子软，只有你知道，你是把「不值得为这点事闹」算得很清楚，才不争的。',
+      tip:'偶尔把那句「我其实有点介意」说出口。你不用一直做那个先低头的人，关系才不会慢慢只按一个人的节奏走。',
+      quote:'你嘴上说的是随便，心里早把答案排好了序。'},
+    {max:55, name:'势均力敌，各带各的', tag:'平衡位',
+      core:'你们不是谁压着谁，是分了工：去哪儿吃什么多半有人拿主意，情绪上谁先软下来却不一定。有几件事你几乎不让，另外几件你连争都懒得争。这种「看事」的状态，反而最稳。',
+      secret:'你偶尔也会觉得累——因为谁都没明说过规则，每次都得当场重新商量一遍。',
+      tip:'挑一件你们最常反复商量的事，把规矩定下来。少一次临场拉扯，就少一次莫名其妙的别扭。',
+      quote:'不是五五开才叫平等，是你们各自都有说了算的地方。'},
+    {max:68, name:'节奏你带着，情绪你兜着', tag:'偏上位',
+      core:'节奏大多是你带的：哪天见、聊多久、这件事怎么收场，你心里早有安排，也习惯顺手把 TA 那头照顾好。你不太慌，TA 一天没回你也不会反复翻记录。',
+      secret:'你偶尔会有点纳闷：明明你什么都安排好了，TA 怎么还是不太主动。其实不是 TA 不上心，是没留太多位置给 TA 拿主意。',
+      tip:'偶尔把选择权整个交出去一次，别补一句「不过我觉得…」。让 TA 定一次，你会看到不一样的 TA。',
+      quote:'你把节奏握得很稳，也别忘了给 TA 留个能说「我来」的空隙。'},
+    {max:100, name:'你定调，也你兜底', tag:'明显上位',
+      core:'这段关系的调子基本是你定的，你也很少因为 TA 的反应打乱自己。你判断得快、收得也快，不太会为一句话反复琢磨半天；连吵架，你也更在意有没有把事说清楚，而不是会不会冷下去。',
+      secret:'只是没人看见的那部分是你自己扛的：安排、兜底、记得所有日子，你都默默做了，久了也会想有人替你拿一次主意。',
+      tip:'把「我一个人就能定」松一点点。让 TA 参与决定，不是把事交差，是把 TA 放进你的生活里。',
+      quote:'你定调，也你兜底；稳是真的，偶尔想歇一下也是真的。'}
+  ];
+  function levelOf(p){ for(var i=0;i<LEVELS.length;i++) if(p<=LEVELS[i].max) return LEVELS[i]; return LEVELS[4]; }
+
+  /* ---------- 状态 ---------- */
+  var idx = 0, answers = new Array(QUIZ.length), picked = null;
+  var SCORE = [1,2,3,4]; // 选项索引 0..3 的基础分（由 dir 决定方向）
+  function sOf(q, oi){ return q.dir === 1 ? SCORE[oi] : SCORE[3-oi]; } // 1=最下位 4=最上位
+
+  function showView(id){
+    ['home','quiz','result'].forEach(function(v){ $(v).classList.toggle('hidden', v !== id); });
+    window.scrollTo(0,0);
+  }
+
+  function renderQ(){
+    var q = QUIZ[idx];
+    $('prog').textContent = '第 ' + (idx+1) + ' / ' + QUIZ.length + ' 题';
+    $('qDim').textContent = '· ' + dimOf(q.d).name + ' ·';
+    $('qIndex').textContent = 'QUESTION ' + (idx+1 < 10 ? '0' + (idx+1) : (idx+1));
+    $('qText').textContent = q.q;
+    $('barFill').style.width = (idx / QUIZ.length * 100) + '%';
+    $('backBtn').style.visibility = idx === 0 ? 'hidden' : 'visible';
+    var ol = $('optList'); ol.innerHTML = '';
+    q.o.forEach(function(text, i){
+      var b = document.createElement('div');
+      b.className = 'opt' + (answers[idx] === i ? ' picked' : '');
+      var dot = document.createElement('span'); dot.className = 'dot'; dot.textContent = 'ABCD'[i];
+      var t = document.createElement('span'); t.textContent = text;
+      b.appendChild(dot); b.appendChild(t);
+      b.onclick = function(){ choose(i); };
+      ol.appendChild(b);
+    });
+  }
+
+  function choose(i){
+    answers[idx] = i;
+    idx++;
+    if(idx >= QUIZ.length){ showResult(); }
+    else { renderQ(); window.scrollTo(0,0); }
+  }
+
+  function calc(){
+    var total = 0, byDim = {};
+    DIMS.forEach(function(d){ byDim[d.k] = {sum:0, n:0}; });
+    var rows = QUIZ.map(function(q, i){
+      var s = sOf(q, answers[i] == null ? 1 : answers[i]);
+      total += s; byDim[q.d].sum += s; byDim[q.d].n++;
+      return {i:i, q:q, s:s, text:q.o[answers[i] == null ? 1 : answers[i]]};
+    });
+    var pct = Math.round((total - QUIZ.length) / (QUIZ.length * 3) * 100);
+    var dimPct = DIMS.map(function(d){
+      var b = byDim[d.k];
+      return Math.round((b.sum - b.n) / (b.n * 3) * 100);
+    });
+    // 回显：低分档 2 题 + 高分档 1 题，维度不重复；解读按该题实际分值走，避免自相矛盾
+    var asc = rows.slice().sort(function(a,b){ return a.s - b.s || a.i - b.i; });
+    var desc = rows.slice().sort(function(a,b){ return b.s - a.s || a.i - b.i; });
+    var lo = asc.filter(function(r){ return r.s <= 2; });
+    var hi = desc.filter(function(r){ return r.s >= 3; });
+    var echoes = [], used = {};
+    function take(list){
+      for(var j=0;j<list.length;j++){
+        var r = list[j];
+        if(used[r.q.d]) continue;
+        used[r.q.d] = 1;
+        var d = dimOf(r.q.d);
+        echoes.push({q:r.q.q, text:r.text, note:r.s >= 3 ? d.high : d.low});
+        return true;
+      }
+      return false;
+    }
+    take(lo); take(lo); take(hi);
+    if(echoes.length < 3) take(asc);
+    if(echoes.length < 3) take(desc);
+    // 偏离中点最远的维度 → 一句专属洞察（第三层个性化）
+    var far = 0;
+    for(var k=1;k<dimPct.length;k++){
+      if(Math.abs(dimPct[k]-50) > Math.abs(dimPct[far]-50)) far = k;
+    }
+    var fd = DIMS[far], fp = dimPct[far];
+    // 偏离不够时不硬凑「极端」文案，如实说没拉开 —— 这比编一句重话更准
+    var extreme = Math.abs(fp - 50) >= 25
+      ? {name:fd.name, pct:fp, title:'最明显的那一处 · ' + fd.name + '（你 ' + fp + '）', text:fp < 50 ? fd.veryLow : fd.veryHigh}
+      : {name:fd.name, pct:fp, title:'你的五个维度，其实没怎么拉开',
+         text:'最偏的也只是' + fd.name + '（你 ' + fp + '）。你不是固定在某一端，更像是看事、看心情——这本身也是一种答案。'};
+    return {total:total, pct:pct, dimPct:dimPct, echoes:echoes, extreme:extreme, L:levelOf(pct)};
+  }
+
+  function showResult(){
+    var r = calc();
+    showView('result');
+    $('rNum').innerHTML = r.pct + '<small> / 100</small>';
+    $('rVs').innerHTML = '你 <b>' + r.pct + '</b> : <b>' + (100-r.pct) + '</b> TA';
+    $('rName').textContent = r.L.name;
+    $('rTag').textContent = r.L.tag;
+    $('rCore').textContent = r.L.core;
+    $('rSecret').textContent = r.L.secret;
+    $('rTip').textContent = r.L.tip;
+    $('rQuote').textContent = '「' + r.L.quote + '」';
+    $('extremeTitle').textContent = r.extreme.title;
+    $('extremeText').textContent = r.extreme.text;
+    $('posPin').style.left = '0%';
+    setTimeout(function(){ $('posPin').style.left = r.pct + '%'; }, 60);
+
+    var db = $('dimBars'); db.innerHTML = '';
+    DIMS.forEach(function(d, i){
+      var p = r.dimPct[i];
+      var row = document.createElement('div'); row.className = 'dim-row';
+      var line = document.createElement('div'); line.className = 'dim-line';
+      var nm = document.createElement('b'); nm.textContent = d.name;
+      var vv = document.createElement('span'); vv.textContent = '你 ' + p + ' : ' + (100-p) + ' TA';
+      line.appendChild(nm); line.appendChild(vv);
+      var tr = document.createElement('div'); tr.className = 'dim-track';
+      var fi = document.createElement('i'); fi.style.width = '0%'; tr.appendChild(fi);
+      row.appendChild(line); row.appendChild(tr); db.appendChild(row);
+      setTimeout(function(){ fi.style.width = p + '%'; }, 80 + i*90);
+    });
+
+    var el = $('echoList'); el.innerHTML = '';
+    r.echoes.forEach(function(e){
+      var box = document.createElement('div'); box.className = 'echo';
+      var q = document.createElement('div'); q.className = 'echo-q'; q.textContent = e.q + '，这题你选了';
+      var a = document.createElement('div'); a.className = 'echo-a'; a.textContent = '「' + e.text + '」';
+      var n = document.createElement('div'); n.className = 'echo-note'; n.textContent = '→ ' + e.note;
+      box.appendChild(q); box.appendChild(a); box.appendChild(n); el.appendChild(box);
+    });
+    picked = r;
+  }
+
+  /* ---------- 保存结果图 ---------- */
+  function roundRect(x, l, t, w, h, r){
+    x.beginPath();
+    x.moveTo(l+r,t); x.lineTo(l+w-r,t); x.quadraticCurveTo(l+w,t,l+w,t+r);
+    x.lineTo(l+w,t+h-r); x.quadraticCurveTo(l+w,t+h,l+w-r,t+h);
+    x.lineTo(l+r,t+h); x.quadraticCurveTo(l,t+h,l,t+h-r);
+    x.lineTo(l,t+r); x.quadraticCurveTo(l,t,l+r,t); x.closePath();
+  }
+  function wrapText(x, text, cx, y, maxw, lh){
+    var line = '', out = [];
+    for(var i=0;i<text.length;i++){
+      if(x.measureText(line + text[i]).width > maxw && line){ out.push(line); line = text[i]; }
+      else line += text[i];
+    }
+    if(line) out.push(line);
+    out.forEach(function(s, k){ x.fillText(s, cx, y + k*lh); });
+    return out.length;
+  }
+  function shareCard(){
+    var r = picked || calc();
+    var cv = document.createElement('canvas'); var W = 1080, H = 1350;
+    cv.width = W; cv.height = H; var x = cv.getContext('2d');
+    var g = x.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#FFF3E2'); g.addColorStop(.48,'#FFE7EE'); g.addColorStop(1,'#FFF6E4');
+    x.fillStyle = g; x.fillRect(0,0,W,H);
+    [[.12,.08,.60,'255,186,120',.38],[.92,.22,.55,'255,158,190',.36],[.78,.96,.62,'255,214,120',.34]]
+      .forEach(function(b){
+        var rg = x.createRadialGradient(W*b[0],H*b[1],0,W*b[0],H*b[1],W*b[2]);
+        rg.addColorStop(0,'rgba('+b[3]+','+b[4]+')'); rg.addColorStop(1,'rgba('+b[3]+',0)');
+        x.fillStyle = rg; x.fillRect(0,0,W,H);
+      });
+    x.textAlign = 'center';
+    x.fillStyle = '#5C4A52'; x.font = '800 54px sans-serif';
+    x.fillText('关系位次测试', W/2, 120);
+    x.fillStyle = '#B08A4F'; x.font = '400 28px sans-serif';
+    x.fillText('20 个真实相处的瞬间 · 不评判关系好坏', W/2, 172);
+    x.fillStyle = '#C9A063'; x.font = '800 150px sans-serif';
+    x.fillText(String(r.pct), W/2, 360);
+    x.fillStyle = '#9A8590'; x.font = '400 28px sans-serif';
+    x.fillText('你的关系位次指数 · 你 ' + r.pct + ' : ' + (100-r.pct) + ' TA', W/2, 410);
+    x.fillStyle = '#5C4A52'; x.font = '800 58px sans-serif';
+    x.fillText(r.L.name, W/2, 510);
+    x.fillStyle = '#B08A4F'; x.font = '400 30px sans-serif';
+    x.fillText(r.L.tag, W/2, 560);
+    DIMS.forEach(function(d, i){
+      var y = 640 + i*70;
+      x.textAlign = 'left'; x.fillStyle = '#5C4A52'; x.font = '400 28px sans-serif';
+      x.fillText(d.name, 100, y+26);
+      x.fillStyle = '#F8DCE6'; roundRect(x, 340, y, 520, 22, 11); x.fill();
+      x.fillStyle = '#C9A063'; roundRect(x, 340, y, 520*r.dimPct[i]/100, 22, 11); x.fill();
+      x.textAlign = 'right'; x.fillStyle = '#B08A4F'; x.font = '700 28px sans-serif';
+      x.fillText(r.dimPct[i] + '', 960, y+26);
+    });
+    x.textAlign = 'center';
+    x.fillStyle = '#FCEEF3'; roundRect(x, 90, 1000, W-180, 180, 24); x.fill();
+    x.strokeStyle = '#E8D3A8'; x.lineWidth = 2; roundRect(x, 90, 1000, W-180, 180, 24); x.stroke();
+    x.fillStyle = '#5C4A52'; x.font = '700 38px sans-serif';
+    wrapText(x, '「' + r.L.quote + '」', W/2, 1065, W-260, 52);
+    x.fillStyle = '#9A8590'; x.font = '400 28px sans-serif';
+    x.fillText('位次不是输赢，是你们相处的方式', W/2, H-110);
+    x.fillText('长按保存图片 · 关系位次测试', W/2, H-64);
+    x.textAlign = 'right'; x.fillStyle = 'rgba(176,138,79,.75)'; x.font = '400 24px sans-serif';
+    x.fillText('小红书@异地恋快快走', W-80, H-24);
+    try{
+      var a = document.createElement('a');
+      a.href = cv.toDataURL('image/png'); a.download = '我的关系位次.png'; a.click();
+    }catch(e){}
+  }
+
+  /* ---------- 绑定 ---------- */
+  $('startBtn').onclick = function(){ idx = 0; answers = new Array(QUIZ.length); picked = null; renderQ(); showView('quiz'); };
+  $('backBtn').onclick = function(){ if(idx > 0){ idx--; renderQ(); } };
+  $('shareBtn').onclick = shareCard;
+  $('againBtn').onclick = function(){ idx = 0; answers = new Array(QUIZ.length); picked = null; showView('home'); };
+  showView('home');
+})();
+</script>
+</body>
+</html>
